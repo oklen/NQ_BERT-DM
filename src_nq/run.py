@@ -37,7 +37,7 @@ from tqdm import tqdm, trange
 from glob import glob
 
 from pytorch_pretrained_bert.modeling import BertForQuestionAnswering, BertConfig
-from pytorch_pretrained_bert.optimization import BertAdam, warmup_linear
+from pytorch_pretrained_bert.optimization import BertAdam
 
 from modules.graph_encoder import Config, EdgeType, NodeType, EdgePosition
 from src_nq.create_examples import InputFeatures, NqExample, AnswerType
@@ -49,7 +49,13 @@ WEIGHTS_NAME = "pytorch_model.bin"
 CONFIG_NAME = "config.json"
 
 logger = logging.getLogger(__name__)
-
+def warmup_linear(x, warmup=0.002):
+    """ Specifies a triangular learning rate schedule where peak is reached at `warmup`*`t_total`-th (as provided to BertAdam) training step.
+        After `t_total`-th training step, learning rate is zero. """
+    if x < warmup:
+        return x/warmup
+    return max((x-1.)/(warmup-1.), 0)
+  
 NqBatch = collections.namedtuple('NqBatch',
                                  ['unique_ids', 'input_ids', 'input_mask', 'segment_ids', 'st_mask', 'st_index',
                                   'edges_src', 'edges_tgt', 'edges_type', 'edges_pos', 'start_positions',
